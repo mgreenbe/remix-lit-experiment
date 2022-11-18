@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Remix Router</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        line-height: 1.5;
+        color: #121212;
+      }
+      #root {
+        display: flex;
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <!-- <form id="form">
+      <div class="mb-3">
+        <label for="name">Native Label</label>
+        <fancy-label for="name">Name:</fancy-label>
+        <fancy-input
+          id="name"
+          placeholder="John Doe"
+          name="input"
+        ></fancy-input>
+      </div>
+      <fancy-button class="primary">Submit</fancy-button>
+    </form> -->
+    <div id="root">
+      <side-bar></side-bar>
+      <detail-pane><contact-edit></contact-edit></detail-pane>
+    </div>
+  </body>
+
+  <!-- <script>
+    const form = document.getElementById("form");
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = Object.fromEntries(new FormData(event.target).entries());
+      console.log("formData:", JSON.stringify(formData, null, 2));
+    });
+  </script> -->
+</html>
