@@ -1,25 +1,8 @@
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { sharedStyles } from "./sharedStyles";
-
-interface Contact {
-  first: string;
-  last: string;
-  avatar: string;
-  twitter: string;
-  notes: string;
-  favorite: boolean;
-}
-
-const gigaChad: Contact = {
-  first: "Giga",
-  last: "Chad",
-  avatar:
-    "https://i.kym-cdn.com/entries/icons/original/000/026/152/gigachad.jpg",
-  twitter: "@gigachad",
-  notes: "This is GigaChad!!",
-  favorite: false,
-};
+import { data } from "./data";
+import { router } from "./router";
 
 @customElement("contact-view")
 export class ContactView extends LitElement {
@@ -46,13 +29,8 @@ export class ContactView extends LitElement {
         margin: 0;
         line-height: 1.2;
         display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-      }
-      h1 form {
-        display: flex;
         align-items: center;
-        margin-top: 0.25rem;
+        gap: 1rem;
       }
       a {
         display: flex;
@@ -68,17 +46,42 @@ export class ContactView extends LitElement {
         gap: 0.5rem;
         margin: 1rem 0;
       }
+      button[value="true"] {
+        padding: 0;
+        font-size: inherit;
+        box-shadow: none;
+        color: #a4a4a4;
+      }
+      button[value="true"]:hover,
+      button[value="false"] {
+        padding: 0;
+        font-size: inherit;
+        box-shadow: none;
+        color: #eeb004;
+      }
     `,
   ];
 
+  constructor() {
+    super();
+
+    router.subscribe((state) => {
+      this.contactId = state.matches[1].params.contactId;
+    });
+  }
+
   @property()
-  contact = gigaChad;
+  contactId?: string;
 
   render() {
-    const { first, last, avatar, twitter, notes, favorite } = this.contact;
+    if (this.contactId === undefined) {
+      return html`<p>contactId is undefined!</p>`;
+    }
+    const { first, last, avatar, twitter, notes, favorite } =
+      data[this.contactId];
     return html`<div><img src=${avatar} /></div>
       <div>
-        <h1>${first} ${last} ${favoriteToggle(favorite)}</h1>
+        <h1><span>${first} ${last}</span> ${favoriteToggle(favorite)}</h1>
         <p>
           <a target="_blank" href=${`https://twitter.com/${twitter}`}>
             ${twitter}
@@ -86,7 +89,7 @@ export class ContactView extends LitElement {
         </p>
         <p>${notes}</p>
         <div id="edit-destroy">
-          <form action="edit">
+          <form action=${`${this.contactId}/edit`}>
             <button type="submit">Edit</button>
           </form>
           <form method="post" action="destroy">

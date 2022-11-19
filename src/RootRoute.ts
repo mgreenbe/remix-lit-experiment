@@ -1,6 +1,8 @@
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { sharedStyles } from "./sharedStyles";
+import { router } from "./router";
+import { Contact } from "./data";
 
 @customElement("root-route")
 export class RootRoute extends LitElement {
@@ -16,14 +18,46 @@ export class RootRoute extends LitElement {
       width: 100%;
     }
   `;
+
+  @property()
+  name = router.state.matches[1].route.id;
+
+  @property()
+  contacts?: Record<string, Contact> = router.state.loaderData?.root;
+
+  constructor() {
+    super();
+
+    router.subscribe((state) => {
+      this.name = state.matches[1].route.id;
+      this.contacts = state.loaderData?.root;
+    });
+
+    this.addEventListener("click", (event) => {
+      const anchor = event
+        .composedPath()
+        .find((x): x is HTMLAnchorElement => x instanceof HTMLAnchorElement);
+      if (anchor) {
+        event.preventDefault();
+        const href = anchor.getAttribute("href");
+        if (href !== null) {
+          router.navigate(href);
+        }
+      }
+    });
+  }
+
   render() {
-    return html`<side-bar></side-bar>
-      <div id="detail"><slot name="index"></slot></div>`;
+    return html`<side-bar .contacts=${this.contacts}></side-bar>
+      <div id="detail"><slot name=${this.name}></slot></div>`;
   }
 }
 
 @customElement("side-bar")
 export class SideBar extends LitElement {
+  @property()
+  contacts?: Record<string, Contact>;
+
   static styles = css`
     :host {
       width: 22rem;
@@ -35,8 +69,8 @@ export class SideBar extends LitElement {
   `;
 
   render() {
-    return html` <side-bar-actions></side-bar-actions>
-      <side-bar-nav></side-bar-nav>
+    return html`<side-bar-actions></side-bar-actions>
+      <side-bar-nav .contacts=${this.contacts}></side-bar-nav>
       <side-bar-footer></side-bar-footer>`;
   }
 }
@@ -59,18 +93,37 @@ export class SideBarActions extends LitElement {
     `,
   ];
 
+  handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    console.log("Submitting!");
+    if (e.target instanceof HTMLFormElement) {
+      const formData = new FormData(e.target);
+      const name = e.submitter?.getAttribute("name");
+      if (name) {
+        const value = e.submitter?.getAttribute("value") ?? "";
+        formData.set(name, value);
+      }
+      router.navigate("/", { formMethod: "post", formData });
+    }
+  }
+
   render() {
     return html`
       <form>
         <input type="search" placeholder="Search" />
       </form>
-      <form><button>New</button></form>
+      <form id="new" @submit=${this.handleSubmit}>
+        <button type="submit">New</button>
+      </form>
     `;
   }
 }
 
 @customElement("side-bar-nav")
 export class SideBarNav extends LitElement {
+  @property()
+  contacts?: Record<string, Contact>;
+
   static styles = css`
     :host {
       padding-left: 2rem;
@@ -87,21 +140,51 @@ export class SideBarNav extends LitElement {
     li {
       margin: 0.25rem 0;
     }
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+      white-space: pre;
+      padding: 0.5rem;
+      border-radius: 8px;
+      color: inherit;
+      text-decoration: none;
+      gap: 1rem;
+    }
+
+    a:hover {
+      background: #e3e3e3;
+    }
+
+    a.active {
+      background: hsl(224, 98%, 58%);
+      color: white;
+    }
+
+    span.favorite {
+      color: #eeb004;
+    }
+    .active > span {
+      color: inherit;
+    }
   `;
 
   render() {
-    return html`<ul>
-      <li><side-bar-link isFavorite=${true}>Giga Chad</side-bar-link></li>
-      <side-bar-link>Franz Mustermann</side-bar-link>
-      <li>
-        <side-bar-link class="active" isFavorite=${true}
-          >Dude Man</side-bar-link
-        >
-      </li>
-      <li>
-        <side-bar-link>Johnny Boy</side-bar-link>
-      </li>
-    </ul>`;
+    return this.contacts
+      ? html`<ul>
+          ${Object.entries(this.contacts).map(
+            ([key, { first, last, favorite }]) =>
+              html`<li>
+                <a href=${`/contacts/${key}`}
+                  ><span>${first} ${last}</span> ${favorite
+                    ? html`<span class="favorite">★</span>`
+                    : nothing}</a
+                >
+              </li>`
+          )}
+        </ul>`
+      : html`<p>Contacts is undefined</p>`;
   }
 }
 
@@ -127,55 +210,11 @@ export class SideBarFooter extends LitElement {
       position: relative;
       top: 1px;
     }
-  `;
-  render() {
-    return html`<h1>Remix Router Contacts</h1>`;
-  }
-}
-
-@customElement("side-bar-link")
-export class SideBarLink extends LitElement {
-  static styles = css`
     a {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      overflow: hidden;
-      white-space: pre;
-      padding: 0.5rem;
-      border-radius: 8px;
-      color: inherit;
       text-decoration: none;
-      gap: 1rem;
-    }
-
-    a:hover {
-      background: #e3e3e3;
-    }
-
-    a.active {
-      background: hsl(224, 98%, 58%);
-      color: white;
-    }
-
-    span {
-      color: #eeb004;
-    }
-    .active > span {
-      color: inherit;
     }
   `;
-
-  @property()
-  isFavorite = false;
-
-  @property()
-  class: string = "";
-
   render() {
-    const starOrNothing = this.isFavorite
-      ? html`<span>&#9733;</span>`
-      : nothing;
-    return html`<a class=${this.class}><slot></slot>${starOrNothing}</a>`;
+    return html`<h1><a href="/">Remix Router Contacts</a></h1>`;
   }
 }

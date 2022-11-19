@@ -1,6 +1,6 @@
 import { css, html, LitElement } from "lit";
 import { customElement } from "lit/decorators.js";
-import "./Root";
+import "./RootRoute";
 import "./Contact";
 
 @customElement("the-router")
