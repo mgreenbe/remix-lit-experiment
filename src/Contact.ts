@@ -123,12 +123,6 @@ export class ContactView extends LitElement {
   }
 
   render() {
-    if (this.formData) {
-      console.log(Object.fromEntries(this.formData.entries()));
-    } else {
-      console.log(this.formData);
-    }
-
     if (this.contact === undefined) {
       return html`<p>Loading...</p>`;
     }
@@ -229,7 +223,8 @@ export class ContactEdit extends LitElement {
 
   handleCancel() {
     console.log("Handle cancel");
-    router.navigate(`/contacts/${this.contact?.id}`);
+    // router.navigate(`/contacts/${this.contact?.id}`);
+    router.navigate(-1);
   }
 
   render() {

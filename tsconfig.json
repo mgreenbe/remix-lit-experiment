@@ -14,7 +14,8 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "skipLibCheck": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "typeRoots": ["src/types"]
   },
   "include": ["src"]
 }

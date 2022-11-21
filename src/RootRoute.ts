@@ -1,5 +1,6 @@
-import { css, html, LitElement, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { css, html, LitElement, nothing, PropertyValues } from "lit";
+import { customElement, property, query, state } from "lit/decorators.js";
+import { ifDefined } from "lit/directives/if-defined.js";
 import { sharedStyles } from "./sharedStyles";
 import { router, Contact } from "./router";
 
@@ -18,18 +19,22 @@ export class RootRoute extends LitElement {
     }
   `;
 
-  @property()
+  @state()
   name = router.state.matches[1].route.id;
 
-  @property()
-  contacts?: Contact[] = router.state.loaderData?.root;
+  @state()
+  contacts?: Contact[] = router.state.loaderData?.root?.contacts;
+
+  @state()
+  q: string = router.state.loaderData?.root?.q ?? "";
 
   constructor() {
     super();
 
     router.subscribe((state) => {
       this.name = state.matches[1].route.id;
-      this.contacts = state.loaderData?.root;
+      this.contacts = state.loaderData?.root?.contacts;
+      this.q = state.loaderData?.root?.q;
     });
 
     this.addEventListener("click", (event) => {
@@ -47,7 +52,7 @@ export class RootRoute extends LitElement {
   }
 
   render() {
-    return html`<side-bar .contacts=${this.contacts}></side-bar>
+    return html`<side-bar .contacts=${this.contacts} .q=${this.q}></side-bar>
       <div id="detail"><slot name=${this.name}></slot></div>`;
   }
 }
@@ -56,6 +61,9 @@ export class RootRoute extends LitElement {
 export class SideBar extends LitElement {
   @property()
   contacts?: Contact[];
+
+  @property()
+  q?: string;
 
   static styles = css`
     :host {
@@ -68,7 +76,7 @@ export class SideBar extends LitElement {
   `;
 
   render() {
-    return html`<side-bar-actions></side-bar-actions>
+    return html`<side-bar-actions .q=${this.q}></side-bar-actions>
       <side-bar-nav .contacts=${this.contacts}></side-bar-nav>
       <side-bar-footer></side-bar-footer>`;
   }
@@ -92,7 +100,26 @@ export class SideBarActions extends LitElement {
     `,
   ];
 
-  handleSubmit(e: SubmitEvent) {
+  @property({
+    hasChanged: (value, oldValue) => {
+      console.log(`value = ${value}, oldValue = ${oldValue}`);
+      return value !== oldValue;
+    },
+  })
+  q?: string;
+
+  updated(changedProperties: PropertyValues<this>) {
+    if (this.q !== changedProperties.get("q")) {
+      if (this.input) {
+        this.input.value = this.q ?? "";
+      }
+    }
+  }
+
+  @query("input")
+  input?: HTMLInputElement;
+
+  handleNew(e: SubmitEvent) {
     e.preventDefault();
     console.log("Submitting!");
     if (e.target instanceof HTMLFormElement) {
@@ -106,12 +133,34 @@ export class SideBarActions extends LitElement {
     }
   }
 
+  handleSearch(e: SubmitEvent) {
+    e.preventDefault();
+    console.log("Submitting!");
+    if (e.target instanceof HTMLFormElement) {
+      const formData = Array.from(new FormData(e.target).entries()).map(
+        ([k, v]) => [k, String(v)] as [string, string]
+      );
+      const search = new URLSearchParams(formData).toString();
+      router.navigate({ pathname: "/", search });
+    }
+  }
+
   render() {
+    console.log(`q = ${this.q}`);
     return html`
-      <form>
-        <input type="search" placeholder="Search" />
+      <form @submit=${this.handleSearch}>
+        <input
+          id="q"
+          aria-label="Search contacts"
+          placeholder="Search"
+          type="search"
+          name="q"
+          value=${ifDefined(this.q)}
+        />
+        <div id="search-spinner" aria-hidden="true" ?hidden=${true}></div>
+        <div className="sr-only" aria-live="polite"></div>
       </form>
-      <form id="new" @submit=${this.handleSubmit}>
+      <form id="new" @submit=${this.handleNew}>
         <button type="submit">New</button>
       </form>
     `;

@@ -1,5 +1,7 @@
 import localforage from "localforage";
 import { defaultContacts } from "./defaultContacts";
+import { matchSorter } from "match-sorter";
+import sortBy from "sort-by";
 
 async function seedIfNecessary() {
   const contacts = await localforage.getItem("contacts");
@@ -30,10 +32,13 @@ async function fakeNetwork() {
   });
 }
 
-export async function getContacts() {
+export async function getContacts(query?: string | null) {
   await fakeNetwork();
-  let contacts = await localforage.getItem("contacts");
-  return (contacts ?? []) as Contact[];
+  let contacts = ((await localforage.getItem("contacts")) ?? []) as Contact[];
+  if (query) {
+    contacts = matchSorter(contacts, query, { keys: ["first", "last"] });
+  }
+  return contacts.sort(sortBy("last", "createdAt"));
 }
 
 export async function getContact(id: string) {

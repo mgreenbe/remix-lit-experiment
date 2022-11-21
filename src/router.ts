@@ -33,7 +33,7 @@ const routes: AgnosticRouteObject[] = [
   {
     id: "root",
     path: "/",
-    loader: getContacts,
+    loader: rootLoader,
     action: async () => {
       console.log("rootAction");
       const contact = await createContact();
@@ -62,6 +62,13 @@ const routes: AgnosticRouteObject[] = [
     ],
   },
 ];
+
+async function rootLoader({ request }: LoaderFunctionArgs) {
+  const url = new URL(request.url);
+  const q = url.searchParams.get("q");
+  const contacts = await getContacts(q);
+  return { contacts, q };
+}
 
 async function contactLoader({ params }: LoaderFunctionArgs) {
   if (params.contactId !== undefined) {
@@ -103,3 +110,4 @@ const history = createBrowserHistory();
 export const router = createRouter({ routes, history }).initialize();
 
 // router.subscribe((state) => console.log(state));
+["1", 2, 3].sort();
