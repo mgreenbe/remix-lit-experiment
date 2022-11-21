@@ -1,8 +1,7 @@
 import { css, html, LitElement, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { sharedStyles } from "./sharedStyles";
-import { router } from "./router";
-import { Contact } from "./data";
+import { router, Contact } from "./router";
 
 @customElement("root-route")
 export class RootRoute extends LitElement {
@@ -23,7 +22,7 @@ export class RootRoute extends LitElement {
   name = router.state.matches[1].route.id;
 
   @property()
-  contacts?: Record<string, Contact> = router.state.loaderData?.root;
+  contacts?: Contact[] = router.state.loaderData?.root;
 
   constructor() {
     super();
@@ -56,7 +55,7 @@ export class RootRoute extends LitElement {
 @customElement("side-bar")
 export class SideBar extends LitElement {
   @property()
-  contacts?: Record<string, Contact>;
+  contacts?: Contact[];
 
   static styles = css`
     :host {
@@ -122,7 +121,7 @@ export class SideBarActions extends LitElement {
 @customElement("side-bar-nav")
 export class SideBarNav extends LitElement {
   @property()
-  contacts?: Record<string, Contact>;
+  contacts?: Contact[];
 
   static styles = css`
     :host {
@@ -173,10 +172,10 @@ export class SideBarNav extends LitElement {
   render() {
     return this.contacts
       ? html`<ul>
-          ${Object.entries(this.contacts).map(
-            ([key, { first, last, favorite }]) =>
+          ${this.contacts.map(
+            ({ id, first, last, favorite }) =>
               html`<li>
-                <a href=${`/contacts/${key}`}
+                <a href=${`/contacts/${id}`}
                   ><span>${first} ${last}</span> ${favorite
                     ? html`<span class="favorite">★</span>`
                     : nothing}</a

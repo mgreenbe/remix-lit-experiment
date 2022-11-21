@@ -1,8 +1,7 @@
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { sharedStyles } from "./sharedStyles";
-import { data } from "./data";
-import { router } from "./router";
+import { router, Contact } from "./router";
 
 @customElement("contact-view")
 export class ContactView extends LitElement {
@@ -66,22 +65,89 @@ export class ContactView extends LitElement {
     super();
 
     router.subscribe((state) => {
-      this.contactId = state.matches[1].params.contactId;
+      this.contact = state.loaderData["contact-view"];
+      this.formData = state.fetchers.get("favorite")?.formData;
+      // console.log(state.fetchers.get("favorite")?.formData);
     });
   }
 
   @property()
-  contactId?: string;
+  formData?: FormData;
+
+  @property()
+  contact?: Contact;
+
+  handleEdit(e: SubmitEvent) {
+    console.log("Handle edit");
+    e.preventDefault();
+    router.navigate(`/contacts/${this.contact?.id}/edit`);
+  }
+
+  handleDestroy(e: SubmitEvent) {
+    e.preventDefault();
+    console.log("Handle destroy");
+    if (e.target instanceof HTMLFormElement) {
+      const formData = new FormData(e.target);
+      const name = e.submitter?.getAttribute("name");
+      if (name) {
+        const value = e.submitter?.getAttribute("value") ?? "";
+        formData.set(name, value);
+      }
+      router.navigate(`/contacts/${this.contact?.id}/destroy`, {
+        formMethod: "post",
+        formData,
+      });
+    }
+  }
+
+  handleFavorite(e: SubmitEvent) {
+    e.preventDefault();
+    console.log("Handle favorite");
+    if (e.target instanceof HTMLFormElement) {
+      const formData = new FormData(e.target);
+      const name = e.submitter?.getAttribute("name");
+      if (name) {
+        const value = e.submitter?.getAttribute("value") ?? "";
+        formData.set(name, value);
+      }
+      router.fetch(
+        "favorite",
+        "contact-view",
+        `/contacts/${this.contact?.id}`,
+        {
+          formMethod: "post",
+          formData,
+        }
+      );
+    }
+  }
 
   render() {
-    if (this.contactId === undefined) {
-      return html`<p>contactId is undefined!</p>`;
+    if (this.formData) {
+      console.log(Object.fromEntries(this.formData.entries()));
+    } else {
+      console.log(this.formData);
     }
-    const { first, last, avatar, twitter, notes, favorite } =
-      data[this.contactId];
+
+    if (this.contact === undefined) {
+      return html`<p>Loading...</p>`;
+    }
+
+    let favorite = this.contact.favorite;
+    if (this.formData) {
+      favorite = this.formData.get("favorite") === "true";
+    }
+    const { first, last, avatar, twitter, notes } = this.contact;
     return html`<div><img src=${avatar} /></div>
       <div>
-        <h1><span>${first} ${last}</span> ${favoriteToggle(favorite)}</h1>
+        <h1>
+          <span>${first} ${last}</span>
+          <form @submit=${this.handleFavorite}>
+            <button name="favorite" value=${favorite ? "false" : "true"}>
+              ${favorite ? "★" : "☆"}
+            </button>
+          </form>
+        </h1>
         <p>
           <a target="_blank" href=${`https://twitter.com/${twitter}`}>
             ${twitter}
@@ -89,10 +155,10 @@ export class ContactView extends LitElement {
         </p>
         <p>${notes}</p>
         <div id="edit-destroy">
-          <form action=${`${this.contactId}/edit`}>
+          <form @submit=${this.handleEdit}>
             <button type="submit">Edit</button>
           </form>
-          <form method="post" action="destroy">
+          <form @submit=${this.handleDestroy}>
             <button class="destroy" type="submit">Delete</button>
           </form>
         </div>
@@ -100,13 +166,13 @@ export class ContactView extends LitElement {
   }
 }
 
-function favoriteToggle(favorite: boolean) {
-  return html`<form method="post">
-    <button name="favorite" value=${favorite ? "false" : "true"}>
-      ${favorite ? "★" : "☆"}
-    </button>
-  </form>`;
-}
+// function favoriteToggle(favorite: boolean) {
+//   return html`<form>
+//     <button name="favorite" value=${favorite ? "false" : "true"}>
+//       ${favorite ? "★" : "☆"}
+//     </button>
+//   </form>`;
+// }
 
 @customElement("contact-edit")
 export class ContactEdit extends LitElement {
@@ -129,26 +195,65 @@ export class ContactEdit extends LitElement {
       textarea {
         flex-grow: 2;
       }
-      p {
+      div {
         display: flex;
         gap: 0.5rem;
-        margin: 0 0 0 8rem;
+        margin: 1rem 0 0 8rem;
       }
     `,
   ];
+
+  constructor() {
+    super();
+
+    router.subscribe((state) => {
+      this.contact = state.loaderData["contact-edit"];
+    });
+  }
+
+  @property()
+  contact?: Contact;
+
+  handleSave(e: SubmitEvent) {
+    e.preventDefault();
+    console.log("Handle save");
+    if (e.target instanceof HTMLFormElement) {
+      const formData = new FormData(e.target);
+      console.log(Object.fromEntries(formData.entries()));
+      router.navigate(`/contacts/${this.contact?.id}/edit`, {
+        formMethod: "post",
+        formData,
+      });
+    }
+  }
+
+  handleCancel() {
+    console.log("Handle cancel");
+    router.navigate(`/contacts/${this.contact?.id}`);
+  }
+
   render() {
-    return html`<form method="post" id="contact-form">
+    if (this.contact === undefined) {
+      return html`Loading...`;
+    }
+    const { first, last, twitter, avatar, notes } = this.contact;
+    return html`<form id="contact-form" @submit=${this.handleSave}>
       <label>
         <span>First name</span>
-        <input type="text" name="first" />
+        <input type="text" name="first" value=${first ?? ""} />
       </label>
       <label>
         <span>Last name</span>
-        <input type="text" name="last" />
+        <input type="text" name="last" value=${last ?? ""} />
       </label>
       <label>
         <span>Twitter</span>
-        <input type="text" name="twitter" placeholder="@jack" />
+        <input
+          type="text"
+          name="twitter"
+          placeholder="@jack"
+          value=${twitter ?? ""}
+        />
       </label>
       <label>
         <span>Avatar URL</span>
@@ -156,16 +261,19 @@ export class ContactEdit extends LitElement {
           placeholder="https://example.com/avatar.jpg"
           type="text"
           name="avatar"
+          value=${avatar ?? ""}
         />
       </label>
       <label>
         <span>Notes</span>
-        <textarea name="notes" rows="6"></textarea>
+        <textarea name="notes" rows="6">${notes ?? ""}</textarea>
       </label>
-      <p>
+      <div>
         <button type="submit">Save</button>
-        <button class="cancel" type="button">Cancel</button>
-      </p>
+        <button class="cancel" type="button" @click=${this.handleCancel}>
+          Cancel
+        </button>
+      </div>
     </form>`;
   }
 }

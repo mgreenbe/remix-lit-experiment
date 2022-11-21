@@ -1,28 +1,6 @@
-const digits = "0123456789";
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-const chars = digits + letters;
-
-export function makeId() {
-  let j = Math.round(Math.random() * letters.length);
-  let id = letters[j];
-  for (let i = 0; i < 7; i++) {
-    j = Math.round(Math.random() * chars.length);
-    id += chars[j];
-  }
-  return id;
-}
-
-export interface Contact {
-  first: string;
-  last: string;
-  avatar: string;
-  twitter: string;
-  notes: string;
-  favorite: boolean;
-}
-
-export const data: Record<string, Contact> = {
-  FQvd3Xc9: {
+export const defaultContacts = [
+  {
+    id: "FQvd3Xc9",
     first: "Eddard",
     last: "Stark",
     avatar:
@@ -32,7 +10,8 @@ export const data: Record<string, Contact> = {
       "Lord Eddard Stark, also known as Ned Stark, was the head of House Stark, the Lord of Winterfell and Warden of the North, and later Hand of the King to King Robert I Baratheon.",
     favorite: true,
   },
-  ReylCDLZ: {
+  {
+    id: "ReylCDLZ",
     first: "Cersei",
     last: "Lannister",
     avatar:
@@ -42,7 +21,8 @@ export const data: Record<string, Contact> = {
       "Queen Cersei I Lannister was the twentieth ruler of the Seven Kingdoms and the widow of King Robert Baratheon.",
     favorite: false,
   },
-  egAXtEMU: {
+  {
+    id: "egAXtEMU",
     first: "Tyrion",
     last: "Lannister",
     avatar:
@@ -52,7 +32,8 @@ export const data: Record<string, Contact> = {
       "Lord Tyrion Lannister is the youngest child of Lord Tywin Lannister and younger brother of Cersei and Jaime Lannister.",
     favorite: true,
   },
-  EQjaffe1: {
+  {
+    id: "EQjaffe1",
     first: "Danaerys",
     last: "Targaryen",
     avatar:
@@ -62,7 +43,8 @@ export const data: Record<string, Contact> = {
       "Queen Daenerys I Targaryen, also known as Daenerys Stormborn, and affectionately known as Dany, was the only daughter of King Aerys II Targaryen and Queen Rhaella, and the younger sister of Rhaegar and Viserys Targaryen.",
     favorite: false,
   },
-  kpRHZTg: {
+  {
+    id: "kpRHZTg",
     first: "Samwell",
     last: "Tarly",
     avatar:
@@ -72,47 +54,4 @@ export const data: Record<string, Contact> = {
       "Samwell, born Samwell Tarly, and often called Sam, is Jon Snow's closest friend, the eldest son of Lord Randyll Tarly and Lady Melessa Tarly of Horn Hill, and the older brother of Dickon and Talla Tarly.",
     favorite: true,
   },
-};
-
-const blanks = {
-  Z3FYfr3J: {
-    first: "",
-    last: "",
-    avatar: "",
-    twitter: "",
-    notes: "",
-    favorite: true,
-  },
-  CI63o94m: {
-    first: "",
-    last: "",
-    avatar: "",
-    twitter: "",
-    notes: "",
-    favorite: true,
-  },
-  Idkcmgg5: {
-    first: "",
-    last: "",
-    avatar: "",
-    twitter: "",
-    notes: "",
-    favorite: true,
-  },
-  sMqwpijK: {
-    first: "",
-    last: "",
-    avatar: "",
-    twitter: "",
-    notes: "",
-    favorite: true,
-  },
-  jqJO6XuC: {
-    first: "",
-    last: "",
-    avatar: "",
-    twitter: "",
-    notes: "",
-    favorite: true,
-  },
-};
+];
