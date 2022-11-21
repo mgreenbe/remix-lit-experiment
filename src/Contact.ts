@@ -102,7 +102,6 @@ export class ContactView extends LitElement {
 
   handleFavorite(e: SubmitEvent) {
     e.preventDefault();
-    console.log("Handle favorite");
     if (e.target instanceof HTMLFormElement) {
       const formData = new FormData(e.target);
       const name = e.submitter?.getAttribute("name");

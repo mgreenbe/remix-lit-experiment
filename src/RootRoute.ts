@@ -1,8 +1,8 @@
 import { css, html, LitElement, nothing, PropertyValues } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
-import { ifDefined } from "lit/directives/if-defined.js";
 import { sharedStyles } from "./sharedStyles";
 import { router, Contact } from "./router";
+import { Navigation } from "@remix-run/router";
 
 @customElement("root-route")
 export class RootRoute extends LitElement {
@@ -26,7 +26,10 @@ export class RootRoute extends LitElement {
   contacts?: Contact[] = router.state.loaderData?.root?.contacts;
 
   @state()
-  q: string = router.state.loaderData?.root?.q ?? "";
+  q: string | null = null;
+
+  @state()
+  navigation?: Navigation;
 
   constructor() {
     super();
@@ -35,6 +38,7 @@ export class RootRoute extends LitElement {
       this.name = state.matches[1].route.id;
       this.contacts = state.loaderData?.root?.contacts;
       this.q = state.loaderData?.root?.q;
+      this.navigation = state.navigation;
     });
 
     this.addEventListener("click", (event) => {
@@ -52,7 +56,11 @@ export class RootRoute extends LitElement {
   }
 
   render() {
-    return html`<side-bar .contacts=${this.contacts} .q=${this.q}></side-bar>
+    return html`<side-bar
+        .contacts=${this.contacts}
+        .q=${this.q}
+        .navigation=${this.navigation}
+      ></side-bar>
       <div id="detail"><slot name=${this.name}></slot></div>`;
   }
 }
@@ -63,7 +71,10 @@ export class SideBar extends LitElement {
   contacts?: Contact[];
 
   @property()
-  q?: string;
+  q: string | null = null;
+
+  @property()
+  navigation?: Navigation;
 
   static styles = css`
     :host {
@@ -76,7 +87,10 @@ export class SideBar extends LitElement {
   `;
 
   render() {
-    return html`<side-bar-actions .q=${this.q}></side-bar-actions>
+    return html`<side-bar-actions
+        .q=${this.q}
+        .navigation=${this.navigation}
+      ></side-bar-actions>
       <side-bar-nav .contacts=${this.contacts}></side-bar-nav>
       <side-bar-footer></side-bar-footer>`;
   }
@@ -97,18 +111,40 @@ export class SideBarActions extends LitElement {
         padding-bottom: 1rem;
         border-bottom: 1px solid #e3e3e3;
       }
+
+      input[type="search"].loading {
+        background-image: none;
+      }
+
+      #search-spinner {
+        width: 1rem;
+        height: 1rem;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%23000' strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M20 4v5h-.582m0 0a8.001 8.001 0 00-15.356 2m15.356-2H15M4 20v-5h.581m0 0a8.003 8.003 0 0015.357-2M4.581 15H9' /%3E%3C/svg%3E");
+        animation: spin 1s infinite linear;
+        position: absolute;
+        left: 0.625rem;
+        top: 0.75rem;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
     `,
   ];
 
-  @property({
-    hasChanged: (value, oldValue) => {
-      console.log(`value = ${value}, oldValue = ${oldValue}`);
-      return value !== oldValue;
-    },
-  })
-  q?: string;
+  @property()
+  q: string | null = null;
+
+  @property()
+  navigation?: Navigation;
 
   updated(changedProperties: PropertyValues<this>) {
+    // console.log(`old = ${changedProperties.get("q")}, new = ${this.q}`);
     if (this.q !== changedProperties.get("q")) {
       if (this.input) {
         this.input.value = this.q ?? "";
@@ -145,19 +181,33 @@ export class SideBarActions extends LitElement {
     }
   }
 
+  async handleInput(e: InputEvent) {
+    const form = (e.target as HTMLInputElement).form!;
+    const formData = Array.from(new FormData(form).entries()).map(
+      ([k, v]) => [k, String(v)] as [string, string]
+    );
+    const search = new URLSearchParams(formData).toString();
+    const isFirstSearch = this.q == null;
+    router.navigate({ pathname: "/", search }, { replace: !isFirstSearch });
+  }
+
   render() {
-    console.log(`q = ${this.q}`);
+    const location = this.navigation?.location;
+    const searching = location && new URLSearchParams(location.search).has("q");
+
     return html`
       <form @submit=${this.handleSearch}>
         <input
           id="q"
+          class=${searching ? "loading" : ""}
           aria-label="Search contacts"
           placeholder="Search"
           type="search"
           name="q"
-          value=${ifDefined(this.q)}
+          value=${this.q ?? ""}
+          @input=${this.handleInput}
         />
-        <div id="search-spinner" aria-hidden="true" ?hidden=${true}></div>
+        <div id="search-spinner" aria-hidden="true" ?hidden=${!searching}></div>
         <div className="sr-only" aria-live="polite"></div>
       </form>
       <form id="new" @submit=${this.handleNew}>

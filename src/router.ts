@@ -110,4 +110,3 @@ const history = createBrowserHistory();
 export const router = createRouter({ routes, history }).initialize();
 
 // router.subscribe((state) => console.log(state));
-["1", 2, 3].sort();
