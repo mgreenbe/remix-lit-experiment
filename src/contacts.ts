@@ -15,7 +15,7 @@ async function seedIfNecessary() {
 
 seedIfNecessary();
 
-export interface Contact {
+export interface ContactT {
   id: string;
   first?: string;
   last?: string;
@@ -28,11 +28,12 @@ export interface Contact {
 
 export async function getContacts(query: string | null = null) {
   await fakeNetwork(`getContacts:${query}`);
-  let contacts = ((await localforage.getItem("contacts")) ?? []) as Contact[];
+  let contacts = ((await localforage.getItem("contacts")) ?? []) as ContactT[];
   if (!contacts) contacts = [];
   if (query) {
     contacts = matchSorter(contacts, query, { keys: ["first", "last"] });
   }
+  console.log(contacts);
   return contacts.sort(sortBy("last", "createdAt"));
 }
 
@@ -48,14 +49,14 @@ export async function createContact() {
 
 export async function getContact(id: string) {
   await fakeNetwork(`contact:${id}`);
-  let contacts = ((await localforage.getItem("contacts")) ?? []) as Contact[];
+  let contacts = ((await localforage.getItem("contacts")) ?? []) as ContactT[];
   let contact = contacts.find((contact) => contact.id === id);
   return contact ?? null;
 }
 
-export async function updateContact(id: string, updates: Partial<Contact>) {
+export async function updateContact(id: string, updates: Partial<ContactT>) {
   await fakeNetwork();
-  let contacts = ((await localforage.getItem("contacts")) ?? []) as Contact[];
+  let contacts = ((await localforage.getItem("contacts")) ?? []) as ContactT[];
   let contact = contacts.find((contact) => contact.id === id);
   if (!contact) throw new Error(`No contact found for ${id}`);
   Object.assign(contact, updates);
@@ -64,7 +65,7 @@ export async function updateContact(id: string, updates: Partial<Contact>) {
 }
 
 export async function deleteContact(id: string) {
-  let contacts = ((await localforage.getItem("contacts")) ?? []) as Contact[];
+  let contacts = ((await localforage.getItem("contacts")) ?? []) as ContactT[];
   let index = contacts.findIndex((contact) => contact.id === id);
   if (index > -1) {
     contacts.splice(index, 1);
@@ -74,15 +75,16 @@ export async function deleteContact(id: string) {
   return false;
 }
 
-function set(contacts: Contact[]) {
+function set(contacts: ContactT[]) {
   return localforage.setItem("contacts", contacts);
 }
 
-// fake a cache so we don't slow down stuff we've already seen
+// // fake a cache so we don't slow down stuff we've already seen
 let fakeCache: Record<string, boolean> = {};
 
 async function fakeNetwork(key?: string) {
   if (!key) {
+    console.log("Hi!!");
     fakeCache = {};
   }
 
@@ -91,7 +93,6 @@ async function fakeNetwork(key?: string) {
   } else if (key) {
     fakeCache[key] = true;
   }
-
   return new Promise((res) => {
     setTimeout(res, Math.random() * 800);
   });
