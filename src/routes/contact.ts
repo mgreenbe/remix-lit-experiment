@@ -1,10 +1,20 @@
 import { LitElement, html, nothing } from "lit";
-import { LoaderFunctionArgs } from "@remix-run/router";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
 import { state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
-import { getContact, ContactT } from "../data";
+import { getContact, updateContact, ContactT } from "../data";
 import { router, submitHandler } from "../router_";
 import { styles } from "./styles";
+
+export async function action({ request, params }: ActionFunctionArgs) {
+  if (params.contactId === undefined) {
+    throw new Error(`(contact action) params.contactId is undefined!`);
+  }
+  let formData = await request.formData();
+  return updateContact(params.contactId, {
+    favorite: formData.get("favorite") === "true",
+  });
+}
 
 export function loader({ params }: LoaderFunctionArgs) {
   if (params.contactId === undefined) {
@@ -27,7 +37,6 @@ export class Contact extends LitElement {
   contact?: ContactT;
 
   render() {
-    console.log(this.contact);
     if (this.contact === undefined) {
       return html`<p><i>No contact loaded!</i></p>`;
     }
@@ -44,7 +53,7 @@ export class Contact extends LitElement {
           ${this.contact.first || this.contact.last
             ? html`${this.contact.first} ${this.contact.last}`
             : html`<i>No Name</i>`}
-          ${Favorite(this.contact.favorite)}
+          ${Favorite(this.contact.favorite, this.contact.id)}
         </h1>
         ${this.contact.twitter
           ? html`<p>
@@ -78,8 +87,14 @@ export class Contact extends LitElement {
   }
 }
 
-function Favorite(favorite: boolean) {
-  return html`<form method="post">
+function Favorite(favorite: boolean, contactId: string) {
+  return html`<form
+    method="post"
+    action=${`/contacts/${contactId}`}
+    @submit=${submitHandler}
+    data-fetcher-key="favorite"
+    data-route-id="contact-view"
+  >
     <button
       name="favorite"
       value=${favorite ? "false" : "true"}

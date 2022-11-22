@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { redirect } from "@remix-run/router";
@@ -34,8 +34,9 @@ export class Root extends LitElement {
     super();
     router.subscribe((state) => {
       this.contacts = state.loaderData.root.contacts;
+      this.contactId = state.matches[0].params?.contactId;
+      console.log(this.contactId);
       const childIds = state.matches.map((match) => match.route.id);
-      console.log(childIds);
       if (childIds.includes("index")) {
         this.childId = "index";
       } else if (childIds.includes("contact-view")) {
@@ -43,12 +44,14 @@ export class Root extends LitElement {
       } else if (childIds.includes("contact-edit")) {
         this.childId = "contact-edit";
       }
-      console.log(this.childId);
     });
   }
 
   @state()
   contacts: ContactT[] = [];
+
+  @state()
+  contactId?: string;
 
   @state()
   childId?: string;
@@ -72,22 +75,32 @@ export class Root extends LitElement {
             <button type="submit">New</button>
           </form>
         </div>
-        <nav>${ContactList(this.contacts)}</nav>
+        <nav>${ContactList(this.contacts, this.contactId)}</nav>
       </div>
       <div id="detail"><slot name=${ifDefined(this.childId)}></slot></div>`;
   }
 }
 
-function ContactList(contacts: ContactT[]) {
+function ContactList(contacts: ContactT[], activeId: string | undefined) {
   return contacts.length
     ? html`<ul>
         ${contacts.map(
           (contact) =>
             html`<li>
-              <a href=${`/contacts/${contact.id}`} @click=${linkHandler}
-                >${contact.first || contact.last
-                  ? html`${contact.first} ${contact.last}`
-                  : html`<i>No Name</i>`}</a
+              <a
+                href=${`/contacts/${contact.id}`}
+                class=${ifDefined(
+                  activeId === contact.id ? "active" : undefined
+                )}
+                @click=${linkHandler}
+                ><span
+                  >${contact.first || contact.last
+                    ? html`${contact.first} ${contact.last}`
+                    : html`<i>No Name</i>`}</span
+                >
+                ${contact.favorite
+                  ? html`<span class="star">★</span>`
+                  : nothing}</a
               >
             </li>`
         )}

@@ -2,11 +2,13 @@ import {
   createRouter,
   createBrowserHistory,
   AgnosticRouteObject,
-  RouterNavigateOptions,
   FormMethod,
 } from "@remix-run/router";
 import { action as rootAction, loader as rootLoader } from "./routes/root";
-import { loader as contactLoader } from "./routes/contact";
+import {
+  action as contactAction,
+  loader as contactLoader,
+} from "./routes/contact";
 import { action as editAction } from "./routes/edit";
 import { action as destroyAction } from "./routes/destroy";
 
@@ -21,6 +23,7 @@ const routes: AgnosticRouteObject[] = [
       {
         id: "contact-view",
         path: "contacts/:contactId",
+        action: contactAction,
         loader: contactLoader,
       },
       {
@@ -54,25 +57,40 @@ export function linkHandler(e: Event) {
 
 export function submitHandler(e: SubmitEvent) {
   console.log("Submit handler");
-  if (!(e.target instanceof HTMLFormElement)) {
+  const form = e.target;
+  if (!(form instanceof HTMLFormElement)) {
     throw new Error(
       "(submit handler) event target must be an instance of HTMLFormElement."
     );
   }
-  const action = e.target.getAttribute("action");
+  const action = form.getAttribute("action");
   if (action === null) {
     throw new Error("(submit handler) action attribute  must be nonnull.");
   }
   e.preventDefault();
-  const formData = new FormData(e.target);
+
+  const formData = new FormData(form);
   const name = e.submitter?.getAttribute("name");
   if (name) {
     const value = e.submitter?.getAttribute("value") ?? "";
     formData.set(name, value);
   }
-  const formMethod = (e.target.getAttribute("method") ?? "get") as FormMethod;
-  const opts: RouterNavigateOptions = { formData, formMethod };
-  router.navigate(action, opts);
+
+  const formMethod = (form.getAttribute("method") ?? "get") as FormMethod;
+
+  const opts = { formData, formMethod };
+
+  const fetcherKey = form.dataset.fetcherKey;
+  if (fetcherKey === undefined) {
+    router.navigate(action, opts);
+  } else {
+    const routeId = form.dataset.routeId;
+    if (routeId === undefined) {
+      throw new Error("When fetcherKey is defined, routeId must be, too.");
+    }
+    console.log(fetcherKey, routeId);
+    router.fetch(fetcherKey, routeId, action, opts);
+  }
 }
 
 router.subscribe(console.log);

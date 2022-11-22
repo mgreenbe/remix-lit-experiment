@@ -189,11 +189,12 @@ export const styles = css`
     padding-top: 1rem;
   }
 
-  #sidebar nav a span {
+  #sidebar nav a span.star {
     float: right;
     color: #eeb004;
   }
-  #sidebar nav a.active span {
+
+  #sidebar nav a.active span.star {
     color: inherit;
   }
 

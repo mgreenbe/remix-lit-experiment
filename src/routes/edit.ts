@@ -77,7 +77,11 @@ export class Edit extends LitElement {
         </label>
         <label>
           <span>Notes</span>
-          <textarea name="notes" rows="6">${this.contact.notes ?? ""}</textarea>
+          <textarea
+            name="notes"
+            rows="6"
+            .value=${this.contact.notes ?? ""}
+          ></textarea>
         </label>
         <p>
           <button type="submit">Save</button>
