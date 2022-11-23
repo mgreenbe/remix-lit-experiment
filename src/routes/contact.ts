@@ -1,5 +1,9 @@
 import { LitElement, html, nothing } from "lit";
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/router";
+import {
+  ActionFunctionArgs,
+  Fetcher,
+  LoaderFunctionArgs,
+} from "@remix-run/router";
 import { state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { getContact, updateContact, ContactT } from "../data";
@@ -10,17 +14,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
   if (params.contactId === undefined) {
     throw new Error(`(contact action) params.contactId is undefined!`);
   }
-  let formData = await request.formData();
-  return updateContact(params.contactId, {
+  const formData = await request.formData();
+  const contact = await updateContact(params.contactId, {
     favorite: formData.get("favorite") === "true",
   });
+  return contact;
 }
 
-export function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ params }: LoaderFunctionArgs) {
   if (params.contactId === undefined) {
     throw new Error(`(contact loader) params.contactId is undefined!`);
   }
-  return getContact(params.contactId);
+  return await getContact(params.contactId);
 }
 
 export class Contact extends LitElement {
@@ -30,16 +35,25 @@ export class Contact extends LitElement {
     super();
     router.subscribe((state) => {
       this.contact = state.loaderData["contact-view"] ?? null;
+      this.favoriteFetcher = state.fetchers.get("favorite");
     });
   }
 
   @state()
   contact: ContactT | null = null;
 
+  @state()
+  favoriteFetcher?: Fetcher;
+
   render() {
     if (this.contact === null) {
       return nothing;
     }
+    let favorite = this.contact.favorite;
+    if (this.favoriteFetcher?.formData) {
+      favorite = this.favoriteFetcher.formData.get("favorite") === "true";
+    }
+
     return html`<div id="contact">
       <div>
         <img
@@ -53,7 +67,7 @@ export class Contact extends LitElement {
           ${this.contact.first || this.contact.last
             ? html`${this.contact.first} ${this.contact.last}`
             : html`<i>No Name</i>`}
-          ${Favorite(this.contact.favorite, this.contact.id)}
+          ${Favorite(favorite, this.contact.id)}
         </h1>
         ${this.contact.twitter
           ? html`<p>

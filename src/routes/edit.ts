@@ -6,13 +6,12 @@ import { router, submitHandler } from "../router_";
 import { styles } from "./styles";
 
 export async function action({ request, params }: ActionFunctionArgs) {
-  console.log("edit action");
   if (params.contactId === undefined) {
     throw new Error(`(contact loader) params.contactId is undefined!`);
   }
   const formData = await request.formData();
   const updates = Object.fromEntries(formData);
-  updateContact(params.contactId, updates);
+  await updateContact(params.contactId, updates);
   return redirect(`/contacts/${params.contactId}`);
 }
 

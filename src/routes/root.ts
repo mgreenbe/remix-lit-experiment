@@ -1,20 +1,21 @@
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { query, state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
-import { LoaderFunctionArgs, redirect } from "@remix-run/router";
+import { classMap } from "lit/directives/class-map.js";
+import { LoaderFunctionArgs, Navigation, redirect } from "@remix-run/router";
 import { router, linkHandler, submitHandler } from "../router_";
 import { getContacts, createContact, ContactT } from "../data";
 import { styles } from "./styles";
 
-export function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const q = url.searchParams.get("q");
-  const contacts = getContacts(q ?? "");
+  const contacts = await getContacts(q ?? "");
   return { contacts, q };
 }
 
-export function action() {
-  const contact = createContact();
+export async function action() {
+  const contact = await createContact();
   return redirect(`/contacts/${contact.id}`);
 }
 
@@ -35,6 +36,11 @@ export class Root extends LitElement {
       this.contacts = state.loaderData.root.contacts;
       this.q = state.loaderData.root.q;
       this.contactId = state.matches[0].params?.contactId;
+      this.loading = state.navigation.state === "loading";
+      this.navigation = state.navigation;
+      if (this.loading) {
+        console.log("loading!");
+      }
       const childIds = state.matches.map((match) => match.route.id);
       if (childIds.includes("index")) {
         this.childId = "index";
@@ -60,6 +66,12 @@ export class Root extends LitElement {
   @state()
   childId?: string;
 
+  @state()
+  loading = true;
+
+  @state()
+  navigation?: Navigation;
+
   @query("#q")
   searchInput!: HTMLInputElement;
 
@@ -79,6 +91,10 @@ export class Root extends LitElement {
   }
 
   render() {
+    const searching =
+      this.navigation?.location &&
+      new URLSearchParams(this.navigation.location.search).has("q");
+
     return html`<div id="sidebar">
         <h1><a href="/" @click=${linkHandler}>React Router Contacts</a></h1>
         <div>
@@ -90,6 +106,7 @@ export class Root extends LitElement {
           >
             <input
               id="q"
+              class=${classMap({ loading: !!searching })}
               aria-label="Search contacts"
               placeholder="Search"
               type="search"
@@ -97,7 +114,11 @@ export class Root extends LitElement {
               value=${ifDefined(this.q ?? undefined)}
               @input=${this.handleInput}
             />
-            <div id="search-spinner" aria-hidden="true" ?hidden=${true}></div>
+            <div
+              id="search-spinner"
+              aria-hidden="true"
+              ?hidden=${!searching}
+            ></div>
             <div className="sr-only" aria-live="polite"></div>
           </form>
           <form method="post" action="/" @submit=${submitHandler}>
@@ -106,7 +127,9 @@ export class Root extends LitElement {
         </div>
         <nav>${ContactList(this.contacts, this.contactId)}</nav>
       </div>
-      <div id="detail"><slot name=${ifDefined(this.childId)}></slot></div>`;
+      <div id="detail" class=${classMap({ loading: this.loading })}>
+        <slot name=${ifDefined(this.childId)}></slot>
+      </div>`;
   }
 }
 

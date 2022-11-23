@@ -17,7 +17,8 @@ if (contacts === null) {
   localStorage.setItem("contacts", JSON.stringify(defaultContacts));
 }
 
-export function getContacts(query?: string) {
+export async function getContacts(query?: string) {
+  await fakeNetwork();
   const contacts = localStorage.getItem("contacts");
   const parsedContacts =
     contacts === null ? [] : (JSON.parse(contacts) as ContactT[]);
@@ -26,14 +27,14 @@ export function getContacts(query?: string) {
   });
 }
 
-export function getContact(id: string) {
-  const contacts = getContacts();
+export async function getContact(id: string) {
+  const contacts = await getContacts();
   const contact = contacts.find((contact) => contact.id === id) ?? null;
   return contact;
 }
 
-export function createContact() {
-  const contacts = getContacts();
+export async function createContact() {
+  const contacts = await getContacts();
   let id = Math.random().toString(36).substring(2, 9);
   let contact = { id, createdAt: Date.now(), favorite: false };
   contacts.unshift(contact);
@@ -41,8 +42,8 @@ export function createContact() {
   return contact;
 }
 
-export function deleteContact(id: string) {
-  const contacts = getContacts();
+export async function deleteContact(id: string) {
+  const contacts = await getContacts();
   let index = contacts.findIndex((contact) => contact.id === id);
   if (index > -1) {
     contacts.splice(index, 1);
@@ -52,8 +53,8 @@ export function deleteContact(id: string) {
   return false;
 }
 
-export function updateContact(id: string, updates: Partial<ContactT>) {
-  const contacts = getContacts();
+export async function updateContact(id: string, updates: Partial<ContactT>) {
+  const contacts = await getContacts();
   const contact = contacts.find((contact) => contact.id === id);
   if (contact === undefined) {
     throw new Error(`No contact found for ${id}.`);
@@ -61,4 +62,10 @@ export function updateContact(id: string, updates: Partial<ContactT>) {
   Object.assign(contact, updates);
   localStorage.setItem("contacts", JSON.stringify(contacts));
   return contact;
+}
+
+async function fakeNetwork() {
+  return new Promise((res) => {
+    setTimeout(res, Math.random() * 800);
+  });
 }
