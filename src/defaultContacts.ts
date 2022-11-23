@@ -9,6 +9,7 @@ export const defaultContacts = [
     notes:
       "Lord Eddard Stark, also known as Ned Stark, was the head of House Stark, the Lord of Winterfell and Warden of the North, and later Hand of the King to King Robert I Baratheon.",
     favorite: true,
+    createdAt: Date.now(),
   },
   {
     id: "ReylCDLZ",
@@ -20,6 +21,7 @@ export const defaultContacts = [
     notes:
       "Queen Cersei I Lannister was the twentieth ruler of the Seven Kingdoms and the widow of King Robert Baratheon.",
     favorite: false,
+    createdAt: Date.now(),
   },
   {
     id: "egAXtEMU",
@@ -31,6 +33,7 @@ export const defaultContacts = [
     notes:
       "Lord Tyrion Lannister is the youngest child of Lord Tywin Lannister and younger brother of Cersei and Jaime Lannister.",
     favorite: true,
+    createdAt: Date.now(),
   },
   {
     id: "EQjaffe1",
@@ -42,6 +45,7 @@ export const defaultContacts = [
     notes:
       "Queen Daenerys I Targaryen, also known as Daenerys Stormborn, and affectionately known as Dany, was the only daughter of King Aerys II Targaryen and Queen Rhaella, and the younger sister of Rhaegar and Viserys Targaryen.",
     favorite: false,
+    createdAt: Date.now(),
   },
   {
     id: "kpRHZTg",
@@ -53,5 +57,6 @@ export const defaultContacts = [
     notes:
       "Samwell, born Samwell Tarly, and often called Sam, is Jon Snow's closest friend, the eldest son of Lord Randyll Tarly and Lady Melessa Tarly of Horn Hill, and the older brother of Dickon and Talla Tarly.",
     favorite: true,
+    createdAt: Date.now(),
   },
 ];

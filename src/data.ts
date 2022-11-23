@@ -1,4 +1,5 @@
 import { defaultContacts } from "./defaultContacts";
+import { matchSorter } from "match-sorter";
 
 export interface ContactT {
   id: string;
@@ -16,11 +17,13 @@ if (contacts === null) {
   localStorage.setItem("contacts", JSON.stringify(defaultContacts));
 }
 
-export function getContacts() {
+export function getContacts(query?: string) {
   const contacts = localStorage.getItem("contacts");
   const parsedContacts =
     contacts === null ? [] : (JSON.parse(contacts) as ContactT[]);
-  return parsedContacts;
+  return matchSorter(parsedContacts, query ?? "", {
+    keys: ["last", "first", "createdAt"],
+  });
 }
 
 export function getContact(id: string) {

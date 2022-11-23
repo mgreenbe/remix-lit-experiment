@@ -29,16 +29,16 @@ export class Contact extends LitElement {
   constructor() {
     super();
     router.subscribe((state) => {
-      this.contact = state.loaderData["contact-view"];
+      this.contact = state.loaderData["contact-view"] ?? null;
     });
   }
 
   @state()
-  contact?: ContactT;
+  contact: ContactT | null = null;
 
   render() {
-    if (this.contact === undefined) {
-      return html`<p><i>No contact loaded!</i></p>`;
+    if (this.contact === null) {
+      return nothing;
     }
     return html`<div id="contact">
       <div>

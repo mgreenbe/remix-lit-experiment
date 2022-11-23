@@ -15,6 +15,10 @@ render(
     <index-route slot="index"></index-route>
     <contact-route slot="contact-view"></contact-route>
     <edit-route slot="contact-edit"></edit-route>
+    <div id="error-page" slot="error">
+      <h1>Oops!</h1>
+      <p>Sorry, an unexpected error has occurred.</p>
+    </div>
   </root-route>`,
   document.getElementById("root")!
 );

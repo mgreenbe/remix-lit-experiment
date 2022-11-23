@@ -37,6 +37,7 @@ const routes: AgnosticRouteObject[] = [
         path: "contacts/:contactId/destroy",
         action: destroyAction,
       },
+      { id: "error", path: "*" },
     ],
   },
 ];
@@ -45,18 +46,20 @@ const history = createBrowserHistory();
 export const router = createRouter({ routes, history }).initialize();
 
 export function linkHandler(e: Event) {
-  console.log("Link Handler");
-  if (!(e.target instanceof HTMLAnchorElement)) {
+  e.preventDefault();
+  let anchor = e
+    .composedPath()
+    .find((t): t is HTMLAnchorElement => t instanceof HTMLAnchorElement);
+  if (anchor === undefined) {
     throw new Error(
-      "(link handler) event target must be an instance of HTMLAnchorElement."
+      "(link handler) event must have an anchor element in its composed path."
     );
   }
-  e.preventDefault();
-  router.navigate(e.target.href);
+  router.navigate(anchor.href);
 }
 
 export function submitHandler(e: SubmitEvent) {
-  console.log("Submit handler");
+  e.preventDefault();
   const form = e.target;
   if (!(form instanceof HTMLFormElement)) {
     throw new Error(
@@ -67,8 +70,6 @@ export function submitHandler(e: SubmitEvent) {
   if (action === null) {
     throw new Error("(submit handler) action attribute  must be nonnull.");
   }
-  e.preventDefault();
-
   const formData = new FormData(form);
   const name = e.submitter?.getAttribute("name");
   if (name) {
@@ -77,6 +78,11 @@ export function submitHandler(e: SubmitEvent) {
   }
 
   const formMethod = (form.getAttribute("method") ?? "get") as FormMethod;
+  if (formMethod === "get") {
+    console.log("get");
+    const search = new URLSearchParams(formData as any).toString(); //  👎
+    router.navigate({ pathname: action, search });
+  }
 
   const opts = { formData, formMethod };
 
@@ -88,9 +94,9 @@ export function submitHandler(e: SubmitEvent) {
     if (routeId === undefined) {
       throw new Error("When fetcherKey is defined, routeId must be, too.");
     }
-    console.log(fetcherKey, routeId);
     router.fetch(fetcherKey, routeId, action, opts);
   }
 }
 
+console.log(router);
 router.subscribe(console.log);
