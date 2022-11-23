@@ -3,7 +3,7 @@ import { query, state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { classMap } from "lit/directives/class-map.js";
 import { LoaderFunctionArgs, Navigation, redirect } from "@remix-run/router";
-import { router, linkHandler, submitHandler } from "../router_";
+import { router, linkHandler, submitHandler } from "../router";
 import { getContacts, createContact, ContactT } from "../data";
 import { styles } from "./styles";
 

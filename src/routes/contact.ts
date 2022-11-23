@@ -7,7 +7,7 @@ import {
 import { state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { getContact, updateContact, ContactT } from "../data";
-import { router, submitHandler } from "../router_";
+import { router, submitHandler } from "../router";
 import { styles } from "./styles";
 
 export async function action({ request, params }: ActionFunctionArgs) {

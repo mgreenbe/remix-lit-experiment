@@ -2,7 +2,7 @@ import { ActionFunctionArgs, redirect } from "@remix-run/router";
 import { LitElement, html, nothing } from "lit";
 import { state } from "lit/decorators.js";
 import { ContactT, updateContact } from "../data";
-import { router, submitHandler } from "../router_";
+import { router, submitHandler } from "../router";
 import { styles } from "./styles";
 
 export async function action({ request, params }: ActionFunctionArgs) {
