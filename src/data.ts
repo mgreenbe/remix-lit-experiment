@@ -18,7 +18,10 @@ export interface ContactT {
 // so it's synchronous.
 let contacts = localStorage.getItem("contacts");
 if (contacts === null) {
+  console.log("Seeding database with default contacts.");
   localStorage.setItem("contacts", JSON.stringify(defaultContacts));
+} else {
+  console.log("Contacts found.");
 }
 
 export async function getContacts(query?: string) {
