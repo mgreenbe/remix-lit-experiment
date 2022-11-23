@@ -1,5 +1,6 @@
 import { defaultContacts } from "./defaultContacts";
 import { matchSorter } from "match-sorter";
+import localforage from "localforage";
 
 export interface ContactT {
   id: string;
@@ -12,59 +13,83 @@ export interface ContactT {
   createdAt?: number;
 }
 
+// Seed the "database", if necessary.
+// Using localStorage rather than localforage here
+// so it's synchronous.
 let contacts = localStorage.getItem("contacts");
 if (contacts === null) {
   localStorage.setItem("contacts", JSON.stringify(defaultContacts));
 }
 
 export async function getContacts(query?: string) {
-  await fakeNetwork();
-  const contacts = localStorage.getItem("contacts");
-  const parsedContacts =
-    contacts === null ? [] : (JSON.parse(contacts) as ContactT[]);
-  return matchSorter(parsedContacts, query ?? "", {
+  await fakeNetwork(`getContacts:${query}`);
+  const contacts = ((await localforage.getItem("contacts")) ??
+    []) as ContactT[];
+  return matchSorter(contacts, query ?? "", {
     keys: ["last", "first", "createdAt"],
   });
 }
 
-export async function getContact(id: string) {
+export async function createContact() {
+  await fakeNetwork();
+  let id = Math.random().toString(36).substring(2, 9);
+  let contact = { id, createdAt: Date.now(), favorite: false };
   const contacts = await getContacts();
+  contacts.unshift(contact);
+  await set(contacts);
+  return contact;
+}
+
+export async function getContact(id: string) {
+  await fakeNetwork(`contact:${id}`);
+  const contacts = ((await localforage.getItem("contacts")) ??
+    []) as ContactT[];
   const contact = contacts.find((contact) => contact.id === id) ?? null;
   return contact;
 }
 
-export async function createContact() {
-  const contacts = await getContacts();
-  let id = Math.random().toString(36).substring(2, 9);
-  let contact = { id, createdAt: Date.now(), favorite: false };
-  contacts.unshift(contact);
-  localStorage.setItem("contacts", JSON.stringify(contacts));
-  return contact;
-}
-
-export async function deleteContact(id: string) {
-  const contacts = await getContacts();
-  let index = contacts.findIndex((contact) => contact.id === id);
-  if (index > -1) {
-    contacts.splice(index, 1);
-    localStorage.setItem("contacts", JSON.stringify(contacts));
-    return true;
-  }
-  return false;
-}
-
 export async function updateContact(id: string, updates: Partial<ContactT>) {
-  const contacts = await getContacts();
+  await fakeNetwork();
+  const contacts = ((await localforage.getItem("contacts")) ??
+    []) as ContactT[];
   const contact = contacts.find((contact) => contact.id === id);
   if (contact === undefined) {
     throw new Error(`No contact found for ${id}.`);
   }
   Object.assign(contact, updates);
-  localStorage.setItem("contacts", JSON.stringify(contacts));
+  await set(contacts);
   return contact;
 }
 
-async function fakeNetwork() {
+export async function deleteContact(id: string) {
+  await fakeNetwork();
+  const contacts = ((await localforage.getItem("contacts")) ??
+    []) as ContactT[];
+  let index = contacts.findIndex((contact) => contact.id === id);
+  if (index > -1) {
+    contacts.splice(index, 1);
+    await set(contacts);
+    return true;
+  }
+  return false;
+}
+
+function set(contacts: ContactT[]) {
+  return localforage.setItem("contacts", contacts);
+}
+
+let fakeCache: Record<string, boolean> = {};
+
+async function fakeNetwork(key?: string) {
+  if (!key) {
+    fakeCache = {};
+  }
+  if (key && fakeCache[key]) {
+    return;
+  }
+  if (key) {
+    fakeCache[key] = true;
+  }
   return new Promise((res) => {
     setTimeout(res, Math.random() * 800);
   });
