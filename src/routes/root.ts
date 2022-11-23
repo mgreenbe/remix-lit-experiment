@@ -38,9 +38,6 @@ export class Root extends LitElement {
       this.contactId = state.matches[0].params?.contactId;
       this.loading = state.navigation.state === "loading";
       this.navigation = state.navigation;
-      if (this.loading) {
-        console.log("loading!");
-      }
       const childIds = state.matches.map((match) => match.route.id);
       if (childIds.includes("index")) {
         this.childId = "index";
