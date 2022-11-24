@@ -1,4 +1,4 @@
-import { LitElement, html, nothing, TemplateResult } from "lit";
+import { LitElement, html, nothing } from "lit";
 import {
   ActionFunctionArgs,
   Fetcher,
@@ -29,12 +29,12 @@ export async function loader({ params }: LoaderFunctionArgs) {
   return await getContact(params.contactId);
 }
 
-export function contactElement(
-  state: RouterState
-): TemplateResult | typeof nothing {
-  const contact = state?.loaderData?.contact;
-  if (!contact) {
-    return nothing;
+export function contactElement(state: RouterState) {
+  const contact = state?.loaderData?.contact as ContactT;
+  let favorite = contact.favorite;
+  const favoriteFormData = state.fetchers.get("favorite")?.formData;
+  if (favoriteFormData) {
+    favorite = favoriteFormData.get("favorite") === "true";
   }
   return html`<div id="contact">
     <div>
@@ -46,7 +46,7 @@ export function contactElement(
         ${contact.first || contact.last
           ? html`${contact.first} ${contact.last}`
           : html`<i>No Name</i>`}
-        ${Favorite(contact.favorite, contact.id)}
+        ${Favorite(favorite, contact.id)}
       </h1>
       ${contact.twitter
         ? html`<p>
@@ -58,10 +58,18 @@ export function contactElement(
       ${contact.notes ? html`<p>${contact.notes}</p>` : nothing}
 
       <div>
-        <form method="get" action=${`/contacts/${contact.id}/edit`}>
+        <form
+          method="get"
+          action=${`/contacts/${contact.id}/edit`}
+          @submit=${submitHandler}
+        >
           <button type="submit">Edit</button>
         </form>
-        <form method="post" action=${`/contacts/${contact.id}/destroy`}>
+        <form
+          method="post"
+          action=${`/contacts/${contact.id}/destroy`}
+          @submit=${submitHandler}
+        >
           <button type="submit">Delete</button>
         </form>
       </div>
@@ -146,6 +154,7 @@ function Favorite(favorite: boolean, contactId: string) {
   return html`<form
     method="post"
     action=${`/contacts/${contactId}`}
+    @submit=${submitHandler}
     data-fetcher-key="favorite"
     data-route-id="contact-view"
   >

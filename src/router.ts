@@ -1,25 +1,25 @@
 import {
   createRouter,
   createBrowserHistory,
-  // AgnosticRouteObject,
   FormMethod,
   RouterState,
   AgnosticRouteMatch,
   AgnosticDataRouteObject,
 } from "@remix-run/router";
 import {
-  // action as rootAction,
+  action as rootAction,
   loader as rootLoader,
   rootElement,
 } from "./routes/root";
+import { indexElement } from "./routes";
 import {
   contactElement,
-  //   action as contactAction,
+  action as contactAction,
   loader as contactLoader,
 } from "./routes/contact";
 import { TemplateResult, nothing, render } from "lit";
-// import { action as editAction } from "./routes/edit";
-// import { action as destroyAction } from "./routes/destroy";
+import { action as editAction, editElement } from "./routes/edit";
+import { action as destroyAction } from "./routes/destroy";
 
 type Element = (
   state: RouterState,
@@ -49,14 +49,29 @@ const routes = [
   {
     id: "root",
     path: "/",
+    action: rootAction,
     loader: rootLoader,
     element: rootElement,
     children: [
+      { id: "index", index: true, element: indexElement },
       {
         id: "contact",
         path: "contacts/:contactId",
         element: contactElement,
         loader: contactLoader,
+        action: contactAction,
+      },
+      {
+        id: "edit",
+        path: "contacts/:contactId/edit",
+        element: editElement,
+        action: editAction,
+        loader: contactLoader,
+      },
+      {
+        id: "destroy",
+        path: "contacts/:contactId/destroy",
+        action: destroyAction,
       },
     ],
   },

@@ -36,8 +36,10 @@ export function rootElement(
   child: TemplateResult | typeof nothing
 ): TemplateResult | typeof nothing {
   const contacts = (state?.loaderData?.root?.contacts ?? []) as ContactT[];
+  const activeId = state?.matches[0].params?.contactId;
+  const loading = state.navigation.state === "loading";
   return html`<div id="sidebar">
-      <h1><a href="/">React Router Contacts</a></h1>
+      <h1><a href="/" @click=${linkHandler}>React Router Contacts</a></h1>
       <div>
         <form id="search-form" role="search" action="/">
           <input
@@ -50,13 +52,13 @@ export function rootElement(
           <div id="search-spinner" aria-hidden="true" ?hidden=${true}></div>
           <div className="sr-only" aria-live="polite"></div>
         </form>
-        <form method="post" action="/">
+        <form method="post" action="/" @submit=${submitHandler}>
           <button type="submit">New</button>
         </form>
       </div>
-      <nav>${ContactList(contacts, undefined)}</nav>
+      <nav>${ContactList(contacts, activeId)}</nav>
     </div>
-    <div id="detail">${child}</div>`;
+    <div id="detail" class=${classMap({ loading })}>${child}</div>`;
 }
 
 export class Root extends LitElement {
@@ -181,6 +183,7 @@ function ContactList(contacts: ContactT[], activeId: string | undefined) {
                 class=${ifDefined(
                   activeId === contact.id ? "active" : undefined
                 )}
+                @click=${linkHandler}
                 ><span
                   >${contact.first || contact.last
                     ? html`${contact.first} ${contact.last}`
