@@ -1,4 +1,3 @@
-import { defaultContacts } from "./defaultContacts";
 import { matchSorter } from "match-sorter";
 import localforage from "localforage";
 
@@ -11,17 +10,6 @@ export interface ContactT {
   notes?: string;
   favorite: boolean;
   createdAt?: number;
-}
-
-// Seed the "database", if necessary.
-// Using localStorage rather than localforage here
-// so it's synchronous.
-let contacts = localStorage.getItem("contacts");
-if (contacts === null) {
-  console.log("Seeding database with default contacts.");
-  localStorage.setItem("contacts", JSON.stringify(defaultContacts));
-} else {
-  console.log("Contacts found.");
 }
 
 export async function getContacts(query?: string) {
