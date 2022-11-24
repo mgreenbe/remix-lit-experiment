@@ -1,15 +1,12 @@
-import { LitElement, html, nothing } from "lit";
+import { html, nothing } from "lit";
 import {
   ActionFunctionArgs,
-  Fetcher,
   LoaderFunctionArgs,
   RouterState,
 } from "@remix-run/router";
-import { state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { getContact, updateContact, ContactT } from "../data";
-import { router, submitHandler } from "../router";
-import { styles } from "./styles";
+import { submitHandler } from "../router";
 
 export async function action({ request, params }: ActionFunctionArgs) {
   if (params.contactId === undefined) {
@@ -75,79 +72,6 @@ export function contactElement(state: RouterState) {
       </div>
     </div>
   </div>`;
-}
-
-export class Contact extends LitElement {
-  static styles = [styles];
-
-  constructor() {
-    super();
-    router.subscribe((state) => {
-      this.contact = state.loaderData["contact-view"] ?? null;
-      this.favoriteFetcher = state.fetchers.get("favorite");
-    });
-  }
-
-  @state()
-  contact: ContactT | null = null;
-
-  @state()
-  favoriteFetcher?: Fetcher;
-
-  render() {
-    if (this.contact === null) {
-      return nothing;
-    }
-    let favorite = this.contact.favorite;
-    if (this.favoriteFetcher?.formData) {
-      favorite = this.favoriteFetcher.formData.get("favorite") === "true";
-    }
-
-    return html`<div id="contact">
-      <div>
-        <img
-          key=${ifDefined(this.contact.avatar)}
-          src=${ifDefined(this.contact.avatar)}
-        />
-      </div>
-
-      <div>
-        <h1>
-          ${this.contact.first || this.contact.last
-            ? html`${this.contact.first} ${this.contact.last}`
-            : html`<i>No Name</i>`}
-          ${Favorite(favorite, this.contact.id)}
-        </h1>
-        ${this.contact.twitter
-          ? html`<p>
-              <a
-                target="_blank"
-                href=${`https://twitter.com/${this.contact.twitter}`}
-                >${this.contact.twitter}</a
-              >
-            </p>`
-          : nothing}
-        ${this.contact.notes ? html`<p>${this.contact.notes}</p>` : nothing}
-
-        <div>
-          <form
-            method="get"
-            action=${`/contacts/${this.contact.id}/edit`}
-            @submit=${submitHandler}
-          >
-            <button type="submit">Edit</button>
-          </form>
-          <form
-            method="post"
-            action=${`/contacts/${this.contact.id}/destroy`}
-            @submit=${submitHandler}
-          >
-            <button type="submit">Delete</button>
-          </form>
-        </div>
-      </div>
-    </div>`;
-  }
 }
 
 function Favorite(favorite: boolean, contactId: string) {
