@@ -1,8 +1,9 @@
-import { LitElement, html, nothing } from "lit";
+import { LitElement, html, nothing, TemplateResult } from "lit";
 import {
   ActionFunctionArgs,
   Fetcher,
   LoaderFunctionArgs,
+  RouterState,
 } from "@remix-run/router";
 import { state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
@@ -26,6 +27,46 @@ export async function loader({ params }: LoaderFunctionArgs) {
     throw new Error(`(contact loader) params.contactId is undefined!`);
   }
   return await getContact(params.contactId);
+}
+
+export function contactElement(
+  state: RouterState
+): TemplateResult | typeof nothing {
+  const contact = state?.loaderData?.contact;
+  if (!contact) {
+    return nothing;
+  }
+  return html`<div id="contact">
+    <div>
+      <img src=${ifDefined(contact.avatar)} />
+    </div>
+
+    <div>
+      <h1>
+        ${contact.first || contact.last
+          ? html`${contact.first} ${contact.last}`
+          : html`<i>No Name</i>`}
+        ${Favorite(contact.favorite, contact.id)}
+      </h1>
+      ${contact.twitter
+        ? html`<p>
+            <a target="_blank" href=${`https://twitter.com/${contact.twitter}`}
+              >${contact.twitter}</a
+            >
+          </p>`
+        : nothing}
+      ${contact.notes ? html`<p>${contact.notes}</p>` : nothing}
+
+      <div>
+        <form method="get" action=${`/contacts/${contact.id}/edit`}>
+          <button type="submit">Edit</button>
+        </form>
+        <form method="post" action=${`/contacts/${contact.id}/destroy`}>
+          <button type="submit">Delete</button>
+        </form>
+      </div>
+    </div>
+  </div>`;
 }
 
 export class Contact extends LitElement {
@@ -105,7 +146,6 @@ function Favorite(favorite: boolean, contactId: string) {
   return html`<form
     method="post"
     action=${`/contacts/${contactId}`}
-    @submit=${submitHandler}
     data-fetcher-key="favorite"
     data-route-id="contact-view"
   >

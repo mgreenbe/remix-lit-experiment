@@ -186,7 +186,8 @@ form[action$="destroy"] button {
   padding-top: 1rem;
 }
 
-#sidebar nav a span {
+/* MG added the .star */
+#sidebar nav a span.star {
   float: right;
   color: #eeb004;
 }

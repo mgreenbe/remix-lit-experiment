@@ -1,43 +1,63 @@
 import {
   createRouter,
   createBrowserHistory,
-  AgnosticRouteObject,
+  // AgnosticRouteObject,
   FormMethod,
+  RouterState,
+  AgnosticRouteMatch,
+  AgnosticDataRouteObject,
 } from "@remix-run/router";
-import { action as rootAction, loader as rootLoader } from "./routes/root";
 import {
-  action as contactAction,
+  // action as rootAction,
+  loader as rootLoader,
+  rootElement,
+} from "./routes/root";
+import {
+  contactElement,
+  //   action as contactAction,
   loader as contactLoader,
 } from "./routes/contact";
-import { action as editAction } from "./routes/edit";
-import { action as destroyAction } from "./routes/destroy";
+import { TemplateResult, nothing, render } from "lit";
+// import { action as editAction } from "./routes/edit";
+// import { action as destroyAction } from "./routes/destroy";
 
-const routes: AgnosticRouteObject[] = [
+type Element = (
+  state: RouterState,
+  child?: TemplateResult | typeof nothing
+) => TemplateResult | typeof nothing;
+
+type Match = AgnosticRouteMatch<
+  string,
+  AgnosticDataRouteObject & { element: Element }
+>;
+export function renderMatches(state: RouterState, target: HTMLElement): void {
+  console.log(state);
+  let template: TemplateResult | typeof nothing = nothing;
+  const n = state.matches.length;
+  if (n > 0) {
+    const match = state.matches[n - 1] as Match;
+    template = match.route.element(state);
+    for (let i = n - 2; i >= 0; i--) {
+      const match = state.matches[i] as Match;
+      template = match.route.element(state, template);
+    }
+  }
+  render(template, target);
+}
+
+const routes = [
   {
     id: "root",
     path: "/",
-    action: rootAction,
     loader: rootLoader,
+    element: rootElement,
     children: [
-      { id: "index", index: true },
       {
-        id: "contact-view",
+        id: "contact",
         path: "contacts/:contactId",
-        action: contactAction,
+        element: contactElement,
         loader: contactLoader,
       },
-      {
-        id: "contact-edit",
-        path: "contacts/:contactId/edit",
-        action: editAction,
-        loader: contactLoader,
-      },
-      {
-        id: "contact-destroy",
-        path: "contacts/:contactId/destroy",
-        action: destroyAction,
-      },
-      { id: "error", path: "*" },
     ],
   },
 ];

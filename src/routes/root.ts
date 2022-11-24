@@ -1,8 +1,20 @@
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import {
+  LitElement,
+  html,
+  css,
+  nothing,
+  PropertyValues,
+  TemplateResult,
+} from "lit";
 import { query, state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { classMap } from "lit/directives/class-map.js";
-import { LoaderFunctionArgs, Navigation, redirect } from "@remix-run/router";
+import {
+  LoaderFunctionArgs,
+  Navigation,
+  redirect,
+  RouterState,
+} from "@remix-run/router";
 import { router, linkHandler, submitHandler } from "../router";
 import { getContacts, createContact, ContactT } from "../data";
 import { styles } from "./styles";
@@ -17,6 +29,34 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action() {
   const contact = await createContact();
   return redirect(`/contacts/${contact.id}`);
+}
+
+export function rootElement(
+  state: RouterState,
+  child: TemplateResult | typeof nothing
+): TemplateResult | typeof nothing {
+  const contacts = (state?.loaderData?.root?.contacts ?? []) as ContactT[];
+  return html`<div id="sidebar">
+      <h1><a href="/">React Router Contacts</a></h1>
+      <div>
+        <form id="search-form" role="search" action="/">
+          <input
+            id="q"
+            aria-label="Search contacts"
+            placeholder="Search"
+            type="search"
+            name="q"
+          />
+          <div id="search-spinner" aria-hidden="true" ?hidden=${true}></div>
+          <div className="sr-only" aria-live="polite"></div>
+        </form>
+        <form method="post" action="/">
+          <button type="submit">New</button>
+        </form>
+      </div>
+      <nav>${ContactList(contacts, undefined)}</nav>
+    </div>
+    <div id="detail">${child}</div>`;
 }
 
 export class Root extends LitElement {
@@ -141,7 +181,6 @@ function ContactList(contacts: ContactT[], activeId: string | undefined) {
                 class=${ifDefined(
                   activeId === contact.id ? "active" : undefined
                 )}
-                @click=${linkHandler}
                 ><span
                   >${contact.first || contact.last
                     ? html`${contact.first} ${contact.last}`
