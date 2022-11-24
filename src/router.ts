@@ -30,6 +30,7 @@ type Match = AgnosticRouteMatch<
   string,
   AgnosticDataRouteObject & { element: Element }
 >;
+
 export function renderMatches(state: RouterState, target: HTMLElement): void {
   console.log(state);
   let template: TemplateResult | typeof nothing = nothing;
