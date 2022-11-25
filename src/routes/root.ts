@@ -1,23 +1,9 @@
-import {
-  LitElement,
-  html,
-  css,
-  nothing,
-  PropertyValues,
-  TemplateResult,
-} from "lit";
-import { query, state } from "lit/decorators.js";
+import { html, nothing, TemplateResult } from "lit";
 import { ifDefined } from "lit/directives/if-defined.js";
 import { classMap } from "lit/directives/class-map.js";
-import {
-  LoaderFunctionArgs,
-  Navigation,
-  redirect,
-  RouterState,
-} from "@remix-run/router";
-import { router, linkHandler, submitHandler } from "../router";
+import { LoaderFunctionArgs, redirect, RouterState } from "@remix-run/router";
+import { linkHandler, submitHandler } from "../router";
 import { getContacts, createContact, ContactT } from "../data";
-import { styles } from "./styles";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -35,21 +21,43 @@ export function rootElement(
   state: RouterState,
   child: TemplateResult | typeof nothing
 ): TemplateResult | typeof nothing {
-  const contacts = (state?.loaderData?.root?.contacts ?? []) as ContactT[];
+  const contacts: ContactT[] = state?.loaderData?.root?.contacts ?? [];
+  const q: string = state?.loaderData?.root?.q ?? "";
   const activeId = state?.matches[0].params?.contactId;
   const loading = state.navigation.state === "loading";
+  const input = document.getElementById("q");
+  const searching = Boolean(
+    state.navigation.location &&
+      new URLSearchParams(state.navigation.location.search).has("q")
+  );
+  if (input instanceof HTMLInputElement) {
+    input.value = q;
+  }
+
   return html`<div id="sidebar">
       <h1><a href="/" @click=${linkHandler}>React Router Contacts</a></h1>
       <div>
-        <form id="search-form" role="search" action="/">
+        <form
+          id="search-form"
+          role="search"
+          action="/"
+          @submit=${submitHandler}
+        >
           <input
             id="q"
+            class=${classMap({ loading: searching })}
             aria-label="Search contacts"
             placeholder="Search"
             type="search"
             name="q"
+            value=${q}
+            @input=${handleInput}
           />
-          <div id="search-spinner" aria-hidden="true" ?hidden=${true}></div>
+          <div
+            id="search-spinner"
+            aria-hidden="true"
+            ?hidden=${!searching}
+          ></div>
           <div className="sr-only" aria-live="polite"></div>
         </form>
         <form method="post" action="/" @submit=${submitHandler}>
@@ -61,114 +69,12 @@ export function rootElement(
     <div id="detail" class=${classMap({ loading })}>${child}</div>`;
 }
 
-export class Root extends LitElement {
-  static styles = [
-    css`
-      :host {
-        display: flex;
-        width: 100%;
-      }
-    `,
-    styles,
-  ];
-
-  constructor() {
-    super();
-    router.subscribe((state) => {
-      this.contacts = state.loaderData.root.contacts;
-      this.q = state.loaderData.root.q;
-      this.contactId = state.matches[0].params?.contactId;
-      this.loading = state.navigation.state === "loading";
-      this.navigation = state.navigation;
-      const childIds = state.matches.map((match) => match.route.id);
-      if (childIds.includes("index")) {
-        this.childId = "index";
-      } else if (childIds.includes("contact-view")) {
-        this.childId = "contact-view";
-      } else if (childIds.includes("contact-edit")) {
-        this.childId = "contact-edit";
-      } else {
-        this.childId = "error";
-      }
-    });
-  }
-
-  @state()
-  contacts: ContactT[] = [];
-
-  @state()
-  q: string | null = null;
-
-  @state()
-  contactId?: string;
-
-  @state()
-  childId?: string;
-
-  @state()
-  loading = true;
-
-  @state()
-  navigation?: Navigation;
-
-  @query("#q")
-  searchInput!: HTMLInputElement;
-
-  updated(changedProperties: PropertyValues<this>) {
-    if (changedProperties.get("q") !== this.q) {
-      this.searchInput.value = this.q ?? "";
+function handleInput(e: InputEvent) {
+  if (e.target instanceof HTMLInputElement) {
+    const form = e.target.form;
+    if (form !== null) {
+      form.requestSubmit();
     }
-  }
-
-  handleInput(e: InputEvent) {
-    if (e.target instanceof HTMLInputElement) {
-      const form = e.target.form;
-      if (form !== null) {
-        form.requestSubmit();
-      }
-    }
-  }
-
-  render() {
-    const searching =
-      this.navigation?.location &&
-      new URLSearchParams(this.navigation.location.search).has("q");
-
-    return html`<div id="sidebar">
-        <h1><a href="/" @click=${linkHandler}>React Router Contacts</a></h1>
-        <div>
-          <form
-            id="search-form"
-            role="search"
-            action="/"
-            @submit=${submitHandler}
-          >
-            <input
-              id="q"
-              class=${classMap({ loading: !!searching })}
-              aria-label="Search contacts"
-              placeholder="Search"
-              type="search"
-              name="q"
-              value=${ifDefined(this.q ?? undefined)}
-              @input=${this.handleInput}
-            />
-            <div
-              id="search-spinner"
-              aria-hidden="true"
-              ?hidden=${!searching}
-            ></div>
-            <div className="sr-only" aria-live="polite"></div>
-          </form>
-          <form method="post" action="/" @submit=${submitHandler}>
-            <button type="submit">New</button>
-          </form>
-        </div>
-        <nav>${ContactList(this.contacts, this.contactId)}</nav>
-      </div>
-      <div id="detail" class=${classMap({ loading: this.loading })}>
-        <slot name=${ifDefined(this.childId)}></slot>
-      </div>`;
   }
 }
 
